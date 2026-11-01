@@ -144,7 +144,7 @@ compile() {
     return
   fi
   local xflag=(); [ "${src##*.}" = "c" ] && xflag=( -x c++ )
-  if em++ "${xflag[@]}" "${CXXARGS[@]}" -c "$src" -o "$o" 2>>"$BUILD/build.errs"; then OBJS+=("$o")
+  if em++ ${xflag[@]+"${xflag[@]}"} "${CXXARGS[@]}" -c "$src" -o "$o" 2>>"$BUILD/build.errs"; then OBJS+=("$o")
   else FAILED+=("$src"); echo "FAIL $src"; fi
 }
 
