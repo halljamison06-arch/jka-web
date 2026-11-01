@@ -48,7 +48,7 @@ CXXARGS=( "${JKA_FLAGS[@]}" "${INCLUDES[@]}" "${DEFINES[@]}" )
 if [ ! -s "$BUILD/../game-sources.txt" ]; then
   grep -oE 'RelativePath="[^"]+\.(cpp|c)"' "$SRC/game/game.vcproj" \
     | sed -e 's/RelativePath="//' -e 's/"$//' | tr '\134' '/' | tr -d '\r' \
-    | sed -e 's#^\.\./##' -e 's#^\./#game/#' -e 's#^\([^/]*\.c\(pp\)\?\)$#game/\1#' \
+    | sed -e 's#^\.\./##' -e 's#^\./#game/#' | sed -E 's#^([^/]+[.](cpp|c))$#game/\1#' \
     | sort -u > "$BUILD/../game-sources.txt"
 fi
 # game/bg_lib.cpp is idTech3's freestanding libc for the QVM interpreter, and its own

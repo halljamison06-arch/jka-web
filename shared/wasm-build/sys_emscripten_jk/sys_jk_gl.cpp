@@ -7,6 +7,7 @@ NEW code (C++). Companion to sys_jk.cpp.
 */
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#include <emscripten/heap.h>
 #include <GL/gl.h>
 #include <string.h>
 
@@ -96,6 +97,41 @@ static const char *CANVAS = "#canvas";
 // ==========================================================================
 // GLimp
 // ==========================================================================
+// Original runtime title art, uploaded through the normal engine image path.
+int IDT3_BrandImage( const char *name, byte **pic, int *width, int *height ) {
+#ifdef IDT3_JKA
+	if ( stricmp(name, "gfx/menus/jediacademy") && stricmp(name, "gfx/menus/jediacademy.tga")
+	     && stricmp(name, "gfx/menus/jediacademy.jpg") ) return 0;
+	if ( !EM_ASM_INT({ return !!(window.JediRE && window.JediRE.brandPixels); }) ) return 0;
+	*width = 1024; *height = 256;
+	*pic = (byte *)Z_Malloc(1024 * 256 * 4, TAG_TEMP_WORKSPACE, qfalse);
+	EM_ASM({ HEAPU8.set(window.JediRE.brandPixels(), $0); }, *pic);
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+// Use the same capped dimensions at creation and on resize; raw DPR dimensions
+// otherwise repeatedly restart a renderer that is already at its pixel budget.
+static int BrowserRenderSize( void ) {
+	return EM_ASM_INT({
+			if (window.JediRE) { var size = window.JediRE.size(); return (size[0] << 16) | size[1]; }
+			var dpr = window.devicePixelRatio || 1;
+			var de = document.documentElement;
+			var vw = window.innerWidth  || (de && de.clientWidth)  || 1280;
+			var vh = window.innerHeight || (de && de.clientHeight) || 720;
+			var ss = (typeof Module !== 'undefined' && Module.__idt3_ss > 0) ? Module.__idt3_ss : 1;
+			var w = Math.max(320, Math.round(vw * dpr * ss));
+			var h = Math.max(240, Math.round(vh * dpr * ss));
+			var maxPix = Math.min(4.0e6 * ss * ss, 8.0e6);
+			var scale = Math.sqrt(Math.min(1, maxPix / (w * h)));
+			w = Math.max(320, (Math.floor(w * scale) >> 1) << 1);
+			h = Math.max(240, (Math.floor(h * scale) >> 1) << 1);
+			return (w << 16) | h;
+		});
+}
+
 void GLimp_Init( void ) {
 	EmscriptenWebGLContextAttributes attrs;
 	int w = 1024, h = 768; float aspect = (float)w / (float)h;
@@ -116,26 +152,13 @@ void GLimp_Init( void ) {
 	}
 #endif
 
-	// idTech3-web: unless the user pinned a custom mode (r_mode -1), render at the FULL
-	// viewport at device pixels — real aspect, no 4:3 pillarbox — under a ~4 MP pixel
-	// budget (Module.__idt3_ss scales it for SSAA). Mirrors sys_emscripten/sys_glimp.c;
+	// JEDI:RE: unless r_mode -1 pins a custom mode, keep viewport aspect within
+	// the selected quality/DPR budget. Module.__idt3_ss remains an opt-in scale.
+	// The fallback keeps compatibility with launch pages without the JEDI:RE policy;
 	// the old gate (rmode==4) also missed JK2 entirely (its default is 3), pinning it to
 	// a CSS-stretched 640x480.
 	if ( rmode != -1 ) {
-		int packed = EM_ASM_INT({
-			var dpr = window.devicePixelRatio || 1;
-			var de = document.documentElement;
-			var vw = window.innerWidth  || (de && de.clientWidth)  || 1280;
-			var vh = window.innerHeight || (de && de.clientHeight) || 720;
-			var ss = (typeof Module !== 'undefined' && Module.__idt3_ss > 0) ? Module.__idt3_ss : 1;
-			var w = Math.max(320, Math.round(vw * dpr * ss));
-			var h = Math.max(240, Math.round(vh * dpr * ss));
-			var maxPix = Math.min(4.0e6 * ss * ss, 8.0e6);
-			var scale = Math.sqrt(Math.min(1, maxPix / (w * h)));
-			w = Math.max(320, (Math.floor(w * scale) >> 1) << 1);
-			h = Math.max(240, (Math.floor(h * scale) >> 1) << 1);
-			return (w << 16) | h;
-		});
+		int packed = BrowserRenderSize();
 		w = ( packed >> 16 ) & 0xffff;
 		h = packed & 0xffff;
 		aspect = (float)w / (float)h;
@@ -382,7 +405,10 @@ void GLimp_Init( void ) {
 #endif
 }
 
-void GLimp_EndFrame( void ) { qglFlush(); }
+void GLimp_EndFrame( void ) {
+	EM_ASM({ if (window.JediRE) { if (window.JediRE.present) window.JediRE.present(); window.JediRE.frame($0); } }, emscripten_get_heap_size());
+	qglFlush();
+}
 // idTech3-web: deliberately does NOT destroy the WebGL context -- see GLimp_Init. The engine
 // calls this from RE_Shutdown(destroyWindow=qtrue), i.e. on vid_restart, and expects to be able
 // to bring the window straight back up; a browser canvas cannot hand out a second context, so
@@ -612,13 +638,11 @@ void IN_Frame( void ) {
 #else
 		if ( IDT3_RI_CVARGET( "r_mode", "3", 0 )->integer != -1 ) {
 #endif
-			int vw = EM_ASM_INT({ var d = window.devicePixelRatio || 1; return Math.round((window.innerWidth || 1280) * d); });
-			int vh = EM_ASM_INT({ var d = window.devicePixelRatio || 1; return Math.round((window.innerHeight || 720) * d); });
+			int packed = BrowserRenderSize();
+			int vw = (packed >> 16) & 0xffff, vh = packed & 0xffff;
 			float dw = (float)vw / (float)glConfig.vidWidth;
 			float dh = (float)vh / (float)glConfig.vidHeight;
-			int pix = glConfig.vidWidth * glConfig.vidHeight;
-			if ( dw < 0.94f || ( dw > 1.06f && pix < 3900000 )
-			  || dh < 0.94f || ( dh > 1.06f && pix < 3900000 ) ) {
+			if ( dw < 0.94f || dw > 1.06f || dh < 0.94f || dh > 1.06f ) {
 				// idTech3-web: a vid_restart re-uploads every texture and re-runs
 				// R_SetColorMappings — on screen that is a brightness flash plus a hitch.
 				// Browsers emit resize events in BURSTS (zoom, devicePixelRatio change, a
@@ -650,7 +674,10 @@ void IN_Activate( void ) { }
 // ==========================================================================
 // Entry point
 // ==========================================================================
-static void Sys_Frame( void ) { IN_Frame(); Com_Frame(); }
+static void Sys_Frame( void ) {
+	EM_ASM({ if (window.JediRE) window.JediRE.beginFrame(); });
+	IN_Frame(); Com_Frame();
+}
 
 static void Sys_ApplyInitialTiming( void *unused ) {
 	EmscriptenVisibilityChangeEvent v;

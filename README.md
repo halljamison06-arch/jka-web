@@ -1,13 +1,15 @@
-# jka-web
+# JEDI:RE
 
-**Star Wars Jedi Knight: Jedi Academy, single-player, running in a browser tab.**
+**An unofficial modernization of Star Wars Jedi Knight: Jedi Academy for the browser.**
+
+See [modernization status and measured limits](docs/JEDI_RE.md) for the current graphics and performance work. Original Raven, id Software, and Virtastic credits and GPL notices are preserved.
 
 <p>
-  <a href="https://jka.virtastic.app">▶ Play now</a> ·
+  <a href="https://aurenth-jedi-academy.onrender.com">▶ Play now</a> ·
   <a href="https://discord.gg/PzFfDkbSue">Discord</a> ·
   <a href="https://www.youtube.com/@Virtastic-Apps">YouTube</a> ·
-  <a href="https://github.com/Virtastic/jka-web/releases">Releases</a> ·
-  <a href="https://github.com/Virtastic/jka-web/issues">Issues</a>
+  <a href="https://github.com/halljamison06-arch/jka-web/releases">Releases</a> ·
+  <a href="https://github.com/halljamison06-arch/jka-web/issues">Issues</a>
 </p>
 
 A WebAssembly port of Raven Software's **original 2003 GPL source release**, compiled with
@@ -22,7 +24,7 @@ turned out to be wrong, is in [`docs/WASM_ADAPTATIONS.md`](docs/WASM_ADAPTATIONS
 
 ## Playing
 
-Open **<https://jka.virtastic.app>** in desktop Chrome, Chromium, Edge or Brave, then pick a route:
+Open **<https://aurenth-jedi-academy.onrender.com>** in desktop Chrome, Chromium, Edge or Brave, then pick a route:
 
 - **Play the demo** — the official free demo mission. Nothing to own, nothing to install.
 - **Bring your own copy** — point the picker at the `GameData/base` folder of a legal install and
@@ -157,7 +159,7 @@ behaviour need a measurement with a positive control, not a plausible story.
 - **[Discord](https://discord.gg/PzFfDkbSue)** — the fastest place for help, screenshots and news.
 - **[YouTube (@Virtastic-Apps)](https://www.youtube.com/@Virtastic-Apps)** — demos, build logs, and
   the other native-to-browser ports we work on.
-- **[GitHub Discussions](https://github.com/Virtastic/jka-web/discussions)** — longer-form
+- **[GitHub Discussions](https://github.com/halljamison06-arch/jka-web/discussions)** — longer-form
   questions and showcase threads.
 
 Security issues: please follow [`SECURITY.md`](SECURITY.md) rather than opening a public issue.

@@ -3,6 +3,8 @@
 # reads), and precompressed .br siblings. Usage: python3 shared/web/server.py [game]
 #   game = rtcw|wolfet|jk2|jka (default rtcw) -> serves play/<game> as root.
 import http.server, socketserver, os, re, sys, json
+from urllib.parse import urlsplit, unquote
+from email.utils import formatdate
 
 GAME = (sys.argv[1] if len(sys.argv) > 1 else 'rtcw').strip()
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'play', GAME)
@@ -17,8 +19,11 @@ class H(http.server.SimpleHTTPRequestHandler):
 
     def translate_path(self, path):
         # Root the server at play/<game> instead of CWD.
-        rel = path.split('?', 1)[0].lstrip('/')
-        return os.path.join(ROOT, rel)
+        rel = unquote(urlsplit(path).path).lstrip('/')
+        candidate = os.path.realpath(os.path.join(ROOT, rel))
+        if os.path.commonpath([os.path.realpath(ROOT), candidate]) != os.path.realpath(ROOT):
+            return os.path.join(ROOT, '__outside_root__')
+        return candidate
 
     # idTech3-web: pk3 auto-discovery so the loader can lazily mount every pak present
     # (demo OR full retail: pak0..pakN, assets0..N, sp_pak*, mp_pak*, etc.) without any
@@ -28,9 +33,9 @@ class H(http.server.SimpleHTTPRequestHandler):
         if self.path.split('?', 1)[0] == '/__paks':
             m = re.search(r'[?&]dir=([A-Za-z0-9_./-]+)', self.path)
             sub = (m.group(1) if m else 'main').strip('/')
-            d = os.path.abspath(os.path.join(ROOT, sub))
+            d = os.path.realpath(os.path.join(ROOT, sub))
             names = []
-            if d.startswith(ROOT) and os.path.isdir(d):
+            if os.path.commonpath([os.path.realpath(ROOT), d]) == os.path.realpath(ROOT) and os.path.isdir(d):
                 names = sorted((f for f in os.listdir(d) if f.lower().endswith('.pk3')),
                                key=str.lower)
             body = json.dumps(names).encode()
@@ -45,6 +50,10 @@ class H(http.server.SimpleHTTPRequestHandler):
     def send_head(self):
         rng = self.headers.get('Range')
         path = self.translate_path(self.path)
+        # If-Range mismatch must return the full current representation.
+        if_range = self.headers.get('If-Range')
+        if if_range and os.path.isfile(path) and if_range != formatdate(os.path.getmtime(path), usegmt=True):
+            rng = None
         if rng and os.path.isfile(path):
             m = re.match(r'bytes=(\d*)-(\d*)$', rng.strip())
             if m and (m.group(1) or m.group(2)):
@@ -59,6 +68,7 @@ class H(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-Range', 'bytes %d-%d/%d' % (start, end, size))
                     self.send_header('Content-Length', str(end - start + 1))
                     self.send_header('Accept-Ranges', 'bytes')
+                    self.send_header('Last-Modified', formatdate(os.path.getmtime(path), usegmt=True))
                     self.end_headers()
 
                     class _Ranged:
@@ -71,10 +81,11 @@ class H(http.server.SimpleHTTPRequestHandler):
                     return _Ranged(f, end - start + 1)
                 self.send_response(416)
                 self.send_header('Content-Range', 'bytes */%d' % os.path.getsize(path))
+                self.send_header('Content-Length', '0')
                 self.end_headers()
                 return None
         br = path + '.br'
-        if (not path.endswith('.br') and os.path.isfile(path) and os.path.isfile(br)
+        if (not self.headers.get('If-Modified-Since') and not path.endswith('.br') and os.path.isfile(path) and os.path.isfile(br)
                 and os.path.getmtime(br) >= os.path.getmtime(path)
                 and 'br' in self.headers.get('Accept-Encoding', '')):
             f = open(br, 'rb')
@@ -82,6 +93,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', self.guess_type(path))
             self.send_header('Content-Length', str(os.fstat(f.fileno()).st_size))
             self.send_header('Content-Encoding', 'br')
+            self.send_header('Last-Modified', formatdate(os.path.getmtime(path), usegmt=True))
             self.end_headers()
             return f
         return super().send_head()
@@ -90,10 +102,16 @@ class H(http.server.SimpleHTTPRequestHandler):
         self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
         self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
         self.send_header('Cross-Origin-Resource-Policy', 'cross-origin')
-        self.send_header('Cache-Control', 'no-store')
+        # Mutable filenames revalidate: repeat visits reuse bytes via 304 without
+        # stranding players on stale engine/module pairs after a deployment.
+        path = urlsplit(self.path).path
+        asset = os.path.splitext(path)[1].lower() in {'.wasm', '.js', '.css', '.svg', '.png', '.pk3', '.data'}
+        self.send_header('Cache-Control', 'public, max-age=0, must-revalidate' if asset else 'no-store')
+        self.send_header('Vary', 'Accept-Encoding')
         super().end_headers()
 
 
-socketserver.TCPServer.allow_reuse_address = True
-print('idTech3-web dev server: http://localhost:%d/  (game=%s, root=%s)' % (PORT, GAME, ROOT))
-socketserver.ThreadingTCPServer(('', PORT), H).serve_forever()
+if __name__ == '__main__':
+    socketserver.TCPServer.allow_reuse_address = True
+    print('JEDI:RE server: http://localhost:%d/  (game=%s, root=%s)' % (PORT, GAME, ROOT))
+    socketserver.ThreadingTCPServer(('', PORT), H).serve_forever()

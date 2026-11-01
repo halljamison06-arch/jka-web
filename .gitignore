@@ -50,3 +50,10 @@ ci/jenkins/config.env
 *.sav
 play/*/saves/
 idt3-full.log
+
+# Authored browser runtime and local benchmark fixtures.
+!play/jka/jedi-re.js
+!play/jka/jedi-re-post.js
+play/jka/baseline/
+__pycache__/
+*.pyc

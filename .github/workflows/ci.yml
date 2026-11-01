@@ -59,6 +59,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Quality and HTTP serving regressions
+        run: |
+          docker run --rm -v "$PWD":/src -w /src emscripten/emsdk:6.0.1 sh -c '
+            node --test shared/wasm-build/quality.test.mjs &&
+            python3 shared/web/test_server.py'
       - name: No game data tracked
         run: |
           if git ls-files | grep -E '\.(pk3|sav)$'; then

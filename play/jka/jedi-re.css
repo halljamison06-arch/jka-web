@@ -1,0 +1,48 @@
+/* JEDI:RE identity. Original layout and engine UI remain credited upstream. GPL-2.0-or-later */
+:root {--black:#060b12;--panel:#0c1622;--panel-2:#102130;--line:#284453;--ink:#e7f3f8;--muted:#95afbc;--faint:#6d8997;--khaki:#53818e;--khaki-hi:#8fd6dd;--gold:#61dce4;--gold-hi:#bcfbff;--blood:#164854;--blood-hi:#39bbc9;--ember:#1b7f98;--bronze-hi:#8fd6dd;--err:#ff9e89;--ok:#8ee5c2}
+body {font-family:Inter,"Avenir Next",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body::before {background:radial-gradient(ellipse at 50% 0, #12425555, transparent 65%),linear-gradient(125deg,#07101b,#060b12 65%);animation:none}
+body::after {opacity:.018}
+h1, #load .ld-title {font-family:"Avenir Next",Inter,-apple-system,sans-serif;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+h1 {font-size:clamp(56px,10vw,108px);line-height:1.1;margin:16px 0 22px}
+h1 .accent,h1 .two,#load .ld-title .accent {color:var(--gold);text-shadow:0 0 32px #61dce433}
+.eyebrow {color:var(--muted);font:500 10px/1.6 ui-monospace,monospace;letter-spacing:.22em}
+.deck {font-family:inherit;font-size:16px;max-width:650px}
+.topbar .home {font-weight:800;letter-spacing:.15em;color:var(--ink)}
+.topbar .socials {font-size:12px}
+.card {background:linear-gradient(135deg,#112333c9,#09131ed9);border-color:var(--line);box-shadow:0 12px 35px #0004;transition:transform .2s,border-color .2s,box-shadow .2s}
+.card:hover {border-color:var(--gold);box-shadow:0 12px 40px #0006,0 0 20px #61dce410;transform:translateY(-3px)}
+.card h2 {font-family:inherit;font-weight:650;letter-spacing:-.02em}
+.card p,.lead {font-family:inherit}
+#load {background:#060b12}
+#load .ld-title {font-size:clamp(36px,8vw,68px)}
+#jre-settings {margin:28px auto;max-width:760px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px 24px;padding:18px;border:1px solid var(--line);border-radius:8px;background:#0b1623;text-align:left;font-size:12px;color:var(--muted)}
+#jre-settings label {display:flex;align-items:center;gap:10px}
+#jre-settings select {font:inherit;color:var(--ink);background:#112737;border:1px solid #365b6a;border-radius:4px;padding:8px 30px 8px 10px}
+#jre-settings input {accent-color:var(--gold)}
+#jre-budget {font-family:ui-monospace,monospace;font-size:11px}
+#jre-pending {flex-basis:100%;margin:0;color:var(--gold-hi)}
+#jre-diagnostics {position:fixed;z-index:96;right:14px;top:48px;padding:12px 16px;white-space:pre;background:#040b12e8;border:1px solid #315766;border-radius:6px;color:#bdf8ff;font:11px/1.7 ui-monospace,Menlo,monospace;pointer-events:none}
+#jre-game-brand {display:none;position:fixed;z-index:90;left:16px;bottom:12px;pointer-events:none;color:#bdf8ffb0;font:700 10px/1 ui-monospace,monospace;letter-spacing:.2em;text-shadow:0 1px 3px #000}
+body.launching #jre-game-brand {display:block}
+footer {font-family:inherit;font-size:11px}
+select:focus-visible,input:focus-visible {outline:2px solid var(--gold);outline-offset:4px}
+@media(prefers-reduced-motion:reduce) {*,*::before,*::after {animation:none!important;transition:none!important}}
+@media(max-width:600px) {#jre-settings {align-items:flex-start;flex-direction:column}#jre-diagnostics {font-size:9px;right:6px;top:8px}}
+
+#jre-post-controls {display:flex;flex-wrap:wrap;gap:14px 22px;flex-basis:100%;border-top:1px solid var(--line);padding-top:14px}
+#jre-post-controls small {flex-basis:100%}
+#jre-post-controls input[type=range] {width:100px}
+#jre-graphics-toggle {display:none;position:fixed;bottom:10px;right:16px;z-index:95;background:#091624e8;color:var(--ink);border:1px solid var(--line);border-radius:5px;font:11px/1.2 inherit;padding:8px 12px;cursor:pointer}
+body.launching #jre-graphics-toggle {display:block}
+body.launching.jre-settings-open #jre-settings {display:flex;position:fixed;z-index:94;top:40px;left:20px;right:20px;max-height:calc(100vh - 100px);overflow:auto}
+body.launching.jre-settings-open #vt-launcher {display:block!important;position:fixed;z-index:93;inset:0;pointer-events:none;background:transparent!important}
+body.launching.jre-settings-open #vt-launcher .wrap > :not(#jre-settings),body.launching.jre-settings-open #vt-launcher > :not(.wrap) {display:none!important}
+body.launching.jre-settings-open #jre-settings {pointer-events:auto}
+
+body.launching > #jre-settings {display:none}
+
+#vt-launcher {background:var(--black)}
+
+.vt-preview {display:none}
+#jre-settings button {color:var(--ink);background:#112737;border:1px solid #365b6a;border-radius:4px;padding:8px 12px;font:inherit;cursor:pointer}

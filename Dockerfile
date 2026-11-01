@@ -27,8 +27,8 @@
 
 # ---- prebuilt: package a tree that was built elsewhere (production/deploy path) --------------
 FROM nginx:1.27-alpine AS prebuilt
-LABEL org.opencontainers.image.title="jka" \
-      org.opencontainers.image.description="Jedi Knight: Jedi Academy — WebAssembly port" \
+LABEL org.opencontainers.image.title="JEDI:RE" \
+      org.opencontainers.image.description="JEDI:RE — unofficial Jedi Knight: Jedi Academy — WebAssembly port" \
       org.opencontainers.image.licenses="GPL-2.0-or-later"
 COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
 COPY play/jka/ /usr/share/nginx/html/
@@ -64,8 +64,8 @@ RUN bash shared/wasm-build/build-jka.sh \
 
 # ---- runtime (DEFAULT): nginx serving the freshly compiled engine ----------------------------
 FROM nginx:1.27-alpine AS runtime
-LABEL org.opencontainers.image.title="jka-web" \
-      org.opencontainers.image.description="Jedi Knight: Jedi Academy — WebAssembly port (built from source)" \
+LABEL org.opencontainers.image.title="JEDI:RE" \
+      org.opencontainers.image.description="JEDI:RE — unofficial Jedi Knight: Jedi Academy — WebAssembly port (built from source)" \
       org.opencontainers.image.licenses="GPL-2.0-or-later"
 # The purpose-built vhost: COOP/COEP/CORP on every response. (jka is single-threaded and does not
 # strictly need cross-origin isolation to run, but the header set is kept identical to the rest of
@@ -76,7 +76,7 @@ COPY play/jka/index.html play/jka/launcher.html /usr/share/nginx/html/
 # og.png is what the OG/Twitter tags in both pages point at. The prebuilt target gets it
 # from the wholesale play/jka/ copy; this target copies file by file, so name it here too
 # or a locally built container advertises a social card that 404s.
-COPY play/jka/og.png /usr/share/nginx/html/
+COPY play/jka/og.png play/jka/jedi-re.css play/jka/jedi-re.js play/jka/jedi-re-post.js play/jka/jedi-re-icon.svg /usr/share/nginx/html/
 # Built engine + game module from the builder stage.
 COPY --from=builder /src/play/jka/jka.js      /usr/share/nginx/html/
 COPY --from=builder /src/play/jka/jka.wasm    /usr/share/nginx/html/

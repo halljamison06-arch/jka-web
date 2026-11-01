@@ -11,3 +11,6 @@ Dockerfile      text eol=lf
 Dockerfile.*    text eol=lf
 *.mjs           text eol=lf
 shared/web/*.py text eol=lf
+
+# The source drop also contains shell scripts; preserve their original bytes.
+games/** -text

@@ -3300,6 +3300,14 @@ If found, it will return a valid shader
 =====================
 */
 static const char *FindShaderInShaderText( const char *shadername ) {
+#if defined(__EMSCRIPTEN__) && defined(IDT3_JKA)
+	// The authored JEDI:RE title has transparency and needs one alpha-blended
+	// stage, rather than the retail logo's opaque/environment/overlay stack.
+	if ( !Q_stricmp(shadername, "gfx/menus/jediacademy") ) {
+		return "{\n nopicmip\n nomipmaps\n {\n map gfx/menus/jediacademy\n blendFunc blend\n rgbGen vertex\n alphaGen vertex\n }\n }";
+	}
+#endif
+
 	char *p = s_shaderText;
 
 	if ( !p ) {

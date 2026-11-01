@@ -5517,3 +5517,10 @@ shipping a broken or empty artifact.
 Verified end to end: both games build in the emsdk container on the Ubuntu builder, deploy to the
 test app server, and pass the full serving-contract smoke test (jk2 :8082, jka :8083) — engine +
 game module present and correctly typed, no game data served.
+
+### JEDI:RE browser modernization (2026-11-01)
+
+See [JEDI_RE.md](JEDI_RE.md) for the implemented quality policy, measured limitations,
+post-process state-cache investigation, serving contract, and remaining renderer work.
+The targeted title texture/shader hooks are WebAssembly-only; engine symbols, gamedirs,
+original credits, and the restricted-demo filesystem checks are preserved.

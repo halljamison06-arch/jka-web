@@ -2045,6 +2045,16 @@ int R_LoadImage( const char *shortname, byte **pic, int *width, int *height, GLe
 	*width = 0;
 	*height = 0;
 
+#ifdef __EMSCRIPTEN__
+	// JEDI:RE supplies its own title artwork without modifying or redistributing
+	// retail/demo data. All other image names follow the original asset pipeline.
+	extern int IDT3_BrandImage( const char *, byte **, int *, int * );
+	if ( IDT3_BrandImage( shortname, pic, width, height ) ) {
+		*format = GL_RGBA;
+		return (*width) * (*height) * 4;
+	}
+#endif
+
 	//handle external LMs
 	if (shortname[0] == '$') {
 		Q_strncpyz( name, shortname+1, sizeof( name ) );
